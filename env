@@ -1,0 +1,40 @@
+# Environment Configuration
+ENVIRONMENT=dev
+SPRING_PROFILES_ACTIVE=dev
+RESTART_POLICY=no
+
+# Database Configuration
+POSTGRES_DB=metis_dev
+POSTGRES_USER=metis
+POSTGRES_PASSWORD=metis123
+POSTGRES_PORT=5432
+
+# Redis Configuration
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DATABASE=0
+
+# JWT Configuration
+JWT_SECRET=MAGIC_SECRET_LOL
+JWT_EXPIRATION=86400000
+JWT_REFRESH_EXPIRATION=604800000
+
+# Server Configuration
+SERVER_PORT=8080
+SERVER_CONTEXT_PATH=/
+
+# JPA Configuration
+JPA_DDL_AUTO=create-drop
+JPA_SHOW_SQL=true
+JPA_FORMAT_SQL=true
+
+# Logging Configuration
+LOG_LEVEL_ROOT=INFO
+LOG_LEVEL_APP=DEBUG
+
+# Development specific
+ENABLE_DEBUG=true
+
+# Optional: Admin credentials
+ADMIN_USERNAME=
+ADMIN_PASSWORD=
