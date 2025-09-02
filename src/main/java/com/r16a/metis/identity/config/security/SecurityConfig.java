@@ -35,10 +35,14 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/login").permitAll()
-                .requestMatchers("/api/auth/register").permitAll()
                 .requestMatchers("/api/auth/refresh").permitAll()
                 .requestMatchers("/api/auth/validate").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
+
+                // Docker container health check
+                .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/actuator/health/**").permitAll()
+                
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
