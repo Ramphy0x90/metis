@@ -2,6 +2,7 @@ package com.r16a.metis.identity.config;
 
 import com.r16a.metis.identity.models.Role;
 import com.r16a.metis.identity.models.User;
+import com.r16a.metis.identity.models.UserRole;
 import com.r16a.metis.identity.repositories.RoleRepository;
 import com.r16a.metis.identity.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,7 @@ public class AdminUserInitializer {
             return;
         }
 
-        Optional<Role> globalAdminRole = roleRepository.findByName("Global Admin");
+        Optional<Role> globalAdminRole = roleRepository.findByName(UserRole.GLOBAL_ADMIN);
         if (globalAdminRole.isEmpty()) {
             log.error("Global Admin role not found. Please ensure roles have been initialized.");
             return;

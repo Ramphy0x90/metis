@@ -56,10 +56,10 @@ CREATE TABLE IF NOT EXISTS bookings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert initial roles
+-- Insert initial roles using enum values
 INSERT INTO roles (id, name) VALUES 
-    (gen_random_uuid(), 'Global Admin'),
-    (gen_random_uuid(), 'Admin'),
-    (gen_random_uuid(), 'Employee'),
-    (gen_random_uuid(), 'User')
+    (gen_random_uuid(), 'GLOBAL_ADMIN'),
+    (gen_random_uuid(), 'ADMIN'),
+    (gen_random_uuid(), 'EMPLOYEE'),
+    (gen_random_uuid(), 'USER')
 ON CONFLICT (name) DO NOTHING;

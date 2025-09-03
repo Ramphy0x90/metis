@@ -3,6 +3,7 @@ package com.r16a.metis.identity.services;
 import com.r16a.metis._core.exceptions.UserAlreadyExistsException;
 import com.r16a.metis.identity.models.Role;
 import com.r16a.metis.identity.models.User;
+import com.r16a.metis.identity.models.UserRole;
 import com.r16a.metis.identity.repositories.RoleRepository;
 import com.r16a.metis.identity.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +64,7 @@ public class UserService {
         // TODO: Relationship with tenant
         // Set default role (USER)
         Set<Role> roles = new HashSet<>();
-        Optional<Role> userRole = roleRepository.findByName("USER");
+        Optional<Role> userRole = roleRepository.findByName(UserRole.USER);
         userRole.ifPresent(roles::add);
         user.setRoles(roles);
 

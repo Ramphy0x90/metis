@@ -17,7 +17,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AuthenticationController {
-
     private final AuthenticationService authenticationService;
     private final UserService userService;
 

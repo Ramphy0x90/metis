@@ -1,6 +1,7 @@
 package com.r16a.metis.identity.repositories;
 
 import com.r16a.metis.identity.models.Role;
+import com.r16a.metis.identity.models.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,5 +10,5 @@ import java.util.UUID;
 
 @Repository
 public interface RoleRepository extends JpaRepository<Role, UUID> {
-    Optional<Role> findByName(String name);
+    Optional<Role> findByName(UserRole name);
 }
