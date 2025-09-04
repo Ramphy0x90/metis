@@ -1,18 +1,26 @@
 package com.r16a.metis.identity.services;
 
 import com.r16a.metis._core.exceptions.UserAlreadyExistsException;
+import com.r16a.metis._core.exceptions.UnauthorizedOperationException;
+import com.r16a.metis._core.exceptions.TenantNotFoundException;
+import com.r16a.metis._core.exceptions.UserNotFoundException;
+import com.r16a.metis.identity.dto.UserResponse;
 import com.r16a.metis.identity.models.Role;
+import com.r16a.metis.identity.models.Tenant;
 import com.r16a.metis.identity.models.User;
 import com.r16a.metis.identity.models.UserRole;
 import com.r16a.metis.identity.repositories.RoleRepository;
+import com.r16a.metis.identity.repositories.TenantRepository;
 import com.r16a.metis.identity.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -22,7 +30,74 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
+
+    /**
+     * Retrieves all users in the system.
+     * Only Global Admin can access this method.
+     *
+     * @return list of all users
+     */
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(this::convertToUserResponse)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Retrieves all users belonging to a specific tenant.
+     * Only Admin users can access this method.
+     *
+     * @param tenantId the UUID of the tenant
+     * @return list of users belonging to the tenant
+     * @throws TenantNotFoundException if the tenant is not found
+     */
+    public List<UserResponse> getUsersByTenant(UUID tenantId) {
+        // Verify tenant exists
+        if (!tenantRepository.existsById(tenantId)) {
+            throw new TenantNotFoundException(tenantId);
+        }
+
+        return userRepository.findByTenantId(tenantId).stream()
+                .map(this::convertToUserResponse)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Retrieves a user by their ID.
+     * Global Admin and Admin users can access this method.
+     *
+     * @param id the UUID of the user
+     * @return the user response
+     * @throws UserNotFoundException if the user is not found
+     */
+    public UserResponse getUserById(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+        return convertToUserResponse(user);
+    }
+
+    /**
+     * Converts a User entity to UserResponse DTO.
+     *
+     * @param user the user entity
+     * @return the user response DTO
+     */
+    private UserResponse convertToUserResponse(User user) {
+        return UserResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .name(user.getName())
+                .surname(user.getSurname())
+                .tenantId(user.getTenant() != null ? user.getTenant().getId() : null)
+                .roles(user.getRoles().stream()
+                        .map(Role::getName)
+                        .collect(java.util.stream.Collectors.toSet()))
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
+    }
 
     /**
      * Finds a user by their email address.
@@ -34,6 +109,92 @@ public class UserService {
     public User findByEmailOrThrow(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException(email));
+    }
+
+    /**
+     * Creates a new user with the specified roles, enforcing authorization rules.
+     * Authorization rules:
+     * - Global Admin can create any user with any role
+     * - Admin can create users but cannot assign Global Admin role
+     * - Other roles cannot create users
+     *
+     * @param email the email address of the new user
+     * @param password the raw password to be encoded and stored
+     * @param name the first name of the user
+     * @param surname the surname of the user
+     * @param tenantId the UUID of the tenant to associate with the user
+     * @param roles the roles to assign to the user
+     * @return the created user response
+     * @throws IllegalArgumentException if the current user is not authorized to create users with the specified roles
+     */
+    public UserResponse createUser(String email, String password, String name, String surname, UUID tenantId, Set<UserRole> roles) {
+        // Check if user already exists
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new UserAlreadyExistsException(email);
+        }
+
+        // Get current user's authentication
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new UnauthorizedOperationException("User must be authenticated to create users");
+        }
+
+        // Check authorization based on current user's roles
+        boolean isGlobalAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_GLOBAL_ADMIN"));
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+
+        // Authorization logic
+        if (!isGlobalAdmin && !isAdmin) {
+            throw new UnauthorizedOperationException("Only Global Admin and Admin users can create new users");
+        }
+
+        // Admin cannot create Global Admin users
+        if (isAdmin && roles.contains(UserRole.GLOBAL_ADMIN)) {
+            throw new UnauthorizedOperationException("Admin users cannot create Global Admin users");
+        }
+
+        // Create the user
+        User user = new User();
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setName(name);
+        user.setSurname(surname);
+
+        // Set tenant relationship
+        if (tenantId != null) {
+            Tenant tenant = tenantRepository.findById(tenantId)
+                    .orElseThrow(() -> new TenantNotFoundException(tenantId));
+            user.setTenant(tenant);
+        }
+
+        // Set roles
+        Set<Role> userRoles = new HashSet<>();
+        for (UserRole roleName : roles) {
+            Optional<Role> role = roleRepository.findByName(roleName);
+            if (role.isPresent()) {
+                userRoles.add(role.get());
+            } else {
+                throw new IllegalArgumentException("Role not found: " + roleName);
+            }
+        }
+
+        user.setRoles(userRoles);
+
+        User savedUser = userRepository.save(user);
+        return UserResponse.builder()
+                .id(savedUser.getId())
+                .email(savedUser.getEmail())
+                .name(savedUser.getName())
+                .surname(savedUser.getSurname())
+                .tenantId(savedUser.getTenant() != null ? savedUser.getTenant().getId() : null)
+                .roles(savedUser.getRoles().stream()
+                        .map(Role::getName)
+                        .collect(java.util.stream.Collectors.toSet()))
+                .createdAt(savedUser.getCreatedAt())
+                .updatedAt(savedUser.getUpdatedAt())
+                .build();
     }
 
     /**
@@ -61,7 +222,13 @@ public class UserService {
         user.setName(name);
         user.setSurname(surname);
 
-        // TODO: Relationship with tenant
+        // Set tenant relationship
+        if (tenantId != null) {
+            Tenant tenant = tenantRepository.findById(tenantId)
+                    .orElseThrow(() -> new TenantNotFoundException(tenantId));
+            user.setTenant(tenant);
+        }
+
         // Set default role (USER)
         Set<Role> roles = new HashSet<>();
         Optional<Role> userRole = roleRepository.findByName(UserRole.USER);
