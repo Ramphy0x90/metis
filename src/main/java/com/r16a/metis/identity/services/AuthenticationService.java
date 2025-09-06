@@ -3,6 +3,7 @@ package com.r16a.metis.identity.services;
 import com.r16a.metis._core.exceptions.InvalidTokenException;
 import com.r16a.metis.identity.config.jwt.JwtService;
 import com.r16a.metis.identity.config.security.CustomUserDetailsService;
+import com.r16a.metis.identity.dto.AuthenticationResponse;
 import com.r16a.metis.identity.models.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,16 +33,28 @@ public class AuthenticationService {
      *
      * @param email the email address of the user attempting to authenticate
      * @param password the raw password of the user
-     * @return a map containing the access token, refresh token, and token type
+     * @return an object with user restricted details and tokens
      * @throws org.springframework.security.core.AuthenticationException if authentication fails
      */
-    public Map<String, String> authenticate(String email, String password) {
+    public AuthenticationResponse authenticate(String email, String password) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, password)
         );
 
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        return buildTokens(userDetails);
+        Map<String, String> tokens = buildTokens(userDetails);
+
+        User user = userService.findByEmailOrThrow(email);
+        AuthenticationResponse response = AuthenticationResponse.builder()
+                .username(email)
+                .name(user.getName())
+                .surname(user.getSurname())
+                .accessToken(tokens.get("accessToken"))
+                .refreshToken(tokens.get("refreshToken"))
+                .tokenType(tokens.get("tokenType"))
+                .build();
+
+        return response;
     }
 
     /**

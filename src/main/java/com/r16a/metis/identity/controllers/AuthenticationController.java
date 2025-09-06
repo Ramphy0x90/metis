@@ -22,14 +22,7 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
-        Map<String, String> tokens = authenticationService.authenticate(request.getEmail(), request.getPassword());
-        
-        AuthenticationResponse response = AuthenticationResponse.builder()
-                .accessToken(tokens.get("accessToken"))
-                .refreshToken(tokens.get("refreshToken"))
-                .tokenType(tokens.get("tokenType"))
-                .build();
-        
+        AuthenticationResponse response = authenticationService.authenticate(request.getEmail(), request.getPassword());
         return ResponseEntity.ok(response);
     }
 
@@ -42,6 +35,7 @@ public class AuthenticationController {
                 request.getSurname(),
                 request.getTenantId()
         );
+
         return ResponseEntity.ok(user);
     }
 
