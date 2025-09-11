@@ -4,17 +4,20 @@ import com.r16a.metis._core.exceptions.InvalidTokenException;
 import com.r16a.metis.identity.config.jwt.JwtService;
 import com.r16a.metis.identity.config.security.CustomUserDetailsService;
 import com.r16a.metis.identity.dto.AuthenticationResponse;
+import com.r16a.metis.identity.models.Role;
 import com.r16a.metis.identity.models.User;
+import com.r16a.metis.identity.models.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -45,16 +48,21 @@ public class AuthenticationService {
         Map<String, String> tokens = buildTokens(userDetails);
 
         User user = userService.findByEmailOrThrow(email);
-        AuthenticationResponse response = AuthenticationResponse.builder()
+        List<String> userRoles = user.getRoles()
+                .stream()
+                .map(Role::getName)
+                .map(UserRole::getDisplayName)
+                .collect(Collectors.toList());
+
+        return AuthenticationResponse.builder()
                 .username(email)
                 .name(user.getName())
                 .surname(user.getSurname())
+                .roles(userRoles)
                 .accessToken(tokens.get("accessToken"))
                 .refreshToken(tokens.get("refreshToken"))
                 .tokenType(tokens.get("tokenType"))
                 .build();
-
-        return response;
     }
 
     /**

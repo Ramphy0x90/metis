@@ -18,4 +18,9 @@ public enum UserRole {
     public String getSpringSecurityRole() {
         return "ROLE_" + this.name();
     }
+
+    @Override
+    public String toString() {
+        return displayName;
+    }
 }
