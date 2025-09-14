@@ -59,7 +59,8 @@ public class TenantService {
         
         tenantRepository.deleteById(id);
     }
-    
+
+    // TODO: Make mapping more robust
     private TenantResponse mapToResponse(Tenant tenant) {
         return TenantResponse.builder()
                 .id(tenant.getId())

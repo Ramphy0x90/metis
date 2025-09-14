@@ -1,5 +1,6 @@
 package com.r16a.metis.identity.controllers;
 
+import com.r16a.metis.identity.dto.AllTenantResponse;
 import com.r16a.metis.identity.dto.TenantCreateRequest;
 import com.r16a.metis.identity.dto.TenantResponse;
 import com.r16a.metis.identity.dto.TenantUpdateRequest;
@@ -14,15 +15,22 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admin/tenants")
+@RequestMapping("/api/tenants")
 @RequiredArgsConstructor
 public class TenantController {
     private final TenantService tenantService;
     
     @GetMapping
-    public ResponseEntity<List<TenantResponse>> getAllTenants() {
+    public ResponseEntity<AllTenantResponse> getAllTenants() {
+        // TODO: think about pagination and generic response for "all *"
         List<TenantResponse> tenants = tenantService.getAllTenants();
-        return ResponseEntity.ok(tenants);
+
+        AllTenantResponse response = AllTenantResponse.builder()
+                .tenants(tenants)
+                .totalCount(tenants.size())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/{id}")

@@ -49,7 +49,7 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health/**").permitAll()
                 
                 // Admin endpoints - require Global Admin role
-                .requestMatchers("/api/admin/**").hasRole("GLOBAL_ADMIN")
+                .requestMatchers("/api/tenants/**").hasRole("GLOBAL_ADMIN")
                 
                 // User management endpoints - handled by method-level security
                 .requestMatchers("/api/users/**").authenticated()
