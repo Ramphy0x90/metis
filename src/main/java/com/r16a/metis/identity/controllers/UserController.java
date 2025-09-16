@@ -1,7 +1,6 @@
 package com.r16a.metis.identity.controllers;
 
-import com.r16a.metis.identity.dto.UserCreateRequest;
-import com.r16a.metis.identity.dto.UserResponse;
+import com.r16a.metis.identity.dto.*;
 import com.r16a.metis.identity.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,9 +21,16 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('GLOBAL_ADMIN')")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
+    public ResponseEntity<AllUserResponse> getAllUsers() {
+        // TODO: think about pagination and generic response for "all *"
         List<UserResponse> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
+
+        AllUserResponse response = AllUserResponse.builder()
+                .users(users)
+                .totalCount(users.size())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/tenant/{tenantId}")
