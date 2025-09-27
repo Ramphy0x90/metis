@@ -1,5 +1,6 @@
 package com.r16a.metis.identity.services;
 
+import com.r16a.metis._core.audit.AuditService;
 import com.r16a.metis._core.exceptions.UserAlreadyExistsException;
 import com.r16a.metis._core.exceptions.UnauthorizedOperationException;
 import com.r16a.metis._core.exceptions.TenantNotFoundException;
@@ -13,6 +14,7 @@ import com.r16a.metis.identity.repositories.RoleRepository;
 import com.r16a.metis.identity.repositories.TenantRepository;
 import com.r16a.metis.identity.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,11 +29,13 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final TenantRepository tenantRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditService auditService;
 
     /**
      * Retrieves all users in the system.
@@ -183,6 +187,13 @@ public class UserService {
         user.setRoles(userRoles);
 
         User savedUser = userRepository.save(user);
+        
+        // Audit log the creation
+        String tenantUIDStr = tenantId != null ? tenantId.toString() : null;
+        auditService.logCreate("User", savedUser.getId(), savedUser, tenantUIDStr);
+        
+        log.info("Created user: {} with ID: {}", savedUser.getEmail(), savedUser.getId());
+        
         return UserResponse.builder()
                 .id(savedUser.getId())
                 .email(savedUser.getEmail())
@@ -235,7 +246,15 @@ public class UserService {
         userRole.ifPresent(roles::add);
         user.setRoles(roles);
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        
+        // Audit log the registration
+        String tenantUIDStr = tenantId != null ? tenantId.toString() : null;
+        auditService.logCreate("User", savedUser.getId(), savedUser, tenantUIDStr);
+        
+        log.info("Registered user: {} with ID: {}", savedUser.getEmail(), savedUser.getId());
+        
+        return savedUser;
     }
 }
 
