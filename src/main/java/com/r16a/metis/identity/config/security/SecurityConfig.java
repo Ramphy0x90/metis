@@ -51,6 +51,9 @@ public class SecurityConfig {
                 // Admin endpoints - require Global Admin role
                 .requestMatchers("/api/tenants/**").hasRole("GLOBAL_ADMIN")
                 
+                // Audit endpoints - require appropriate roles
+                .requestMatchers("/api/audit/**").authenticated()
+                
                 // User management endpoints - handled by method-level security
                 .requestMatchers("/api/users/**").authenticated()
                 
