@@ -16,8 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+record TenantCounts(long employeeCount, long customerCount) {}
 
 @Service
 @RequiredArgsConstructor
@@ -31,8 +34,18 @@ public class TenantService {
     private final AuditService auditService;
     
     public List<TenantResponse> getAllTenants() {
-        return tenantRepository.findAll().stream()
-                .map(this::mapToResponse)
+        List<Tenant> tenants = tenantRepository.findAll();
+        List<Object[]> tenantCounts = userRepository.getTenantCounts();
+        
+        // Create a map for quick lookup of counts by tenant ID
+        Map<UUID, TenantCounts> countsMap = tenantCounts.stream()
+                .collect(Collectors.toMap(
+                    row -> (UUID) row[0],
+                    row -> new TenantCounts((Long) row[1], (Long) row[2])
+                ));
+        
+        return tenants.stream()
+                .map(tenant -> mapToResponseWithCounts(tenant, countsMap.get(tenant.getId())))
                 .collect(Collectors.toList());
     }
     
@@ -119,12 +132,32 @@ public class TenantService {
 
     // TODO: Make mapping more robust
     private TenantResponse mapToResponse(Tenant tenant) {
+        long employeeCount = userRepository.countEmployeesByTenantId(tenant.getId());
+        long customerCount = userRepository.countCustomersByTenantId(tenant.getId());
+        
         return TenantResponse.builder()
                 .id(tenant.getId())
                 .name(tenant.getName())
                 .domain(tenant.getDomain())
                 .createdAt(tenant.getCreatedAt())
                 .updatedAt(tenant.getUpdatedAt())
+                .employeeCount(employeeCount)
+                .customerCount(customerCount)
+                .build();
+    }
+    
+    private TenantResponse mapToResponseWithCounts(Tenant tenant, TenantCounts counts) {
+        long employeeCount = counts != null ? counts.employeeCount() : 0;
+        long customerCount = counts != null ? counts.customerCount() : 0;
+        
+        return TenantResponse.builder()
+                .id(tenant.getId())
+                .name(tenant.getName())
+                .domain(tenant.getDomain())
+                .createdAt(tenant.getCreatedAt())
+                .updatedAt(tenant.getUpdatedAt())
+                .employeeCount(employeeCount)
+                .customerCount(customerCount)
                 .build();
     }
 }

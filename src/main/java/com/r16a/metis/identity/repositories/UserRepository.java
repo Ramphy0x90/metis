@@ -19,4 +19,27 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Modifying
     @Query("DELETE FROM User u WHERE u.tenant.id = :tenantId")
     void deleteByTenantId(@Param("tenantId") UUID tenantId);
+    
+    @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE u.tenant.id = :tenantId AND r.name = 'EMPLOYEE'")
+    long countEmployeesByTenantId(@Param("tenantId") UUID tenantId);
+    
+    @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE u.tenant.id = :tenantId AND r.name = 'USER'")
+    long countCustomersByTenantId(@Param("tenantId") UUID tenantId);
+    
+    @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r.name = 'EMPLOYEE'")
+    long countTotalEmployees();
+    
+    @Query("SELECT COUNT(u) FROM User u JOIN u.roles r WHERE r.name = 'USER'")
+    long countTotalCustomers();
+    
+    @Query("""
+        SELECT t.id, 
+               COUNT(CASE WHEN r.name = 'EMPLOYEE' THEN 1 END) as employeeCount,
+               COUNT(CASE WHEN r.name = 'USER' THEN 1 END) as customerCount
+        FROM Tenant t 
+        LEFT JOIN t.users u 
+        LEFT JOIN u.roles r 
+        GROUP BY t.id
+        """)
+    List<Object[]> getTenantCounts();
 }

@@ -18,4 +18,6 @@ public class TenantResponse {
     private String domain;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private long employeeCount;
+    private long customerCount;
 }
