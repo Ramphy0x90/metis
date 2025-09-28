@@ -16,12 +16,12 @@ import java.util.UUID;
 @RequestMapping("/api/audit")
 @RequiredArgsConstructor
 public class AuditController {
-    private final AuditLogRepository auditLogRepository;
+    private final AuditService auditService;
     
     @GetMapping("/logs")
     @PreAuthorize("hasRole('GLOBAL_ADMIN')")
     public ResponseEntity<Page<AuditLog>> getAllAuditLogs(Pageable pageable) {
-        Page<AuditLog> logs = auditLogRepository.findAll(pageable);
+        Page<AuditLog> logs = auditService.getAllAuditLogs(pageable);
         return ResponseEntity.ok(logs);
     }
     
@@ -30,28 +30,28 @@ public class AuditController {
     public ResponseEntity<List<AuditLog>> getAuditLogsByEntity(
             @PathVariable String entityType,
             @PathVariable UUID entityId) {
-        List<AuditLog> logs = auditLogRepository.findByEntityTypeAndEntityId(entityType, entityId);
+        List<AuditLog> logs = auditService.getAuditLogsByEntity(entityType, entityId);
         return ResponseEntity.ok(logs);
     }
     
     @GetMapping("/logs/tenant/{tenantId}")
     @PreAuthorize("hasRole('GLOBAL_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<List<AuditLog>> getAuditLogsByTenant(@PathVariable String tenantId) {
-        List<AuditLog> logs = auditLogRepository.findByTenantId(tenantId);
+        List<AuditLog> logs = auditService.getAuditLogsByTenant(tenantId);
         return ResponseEntity.ok(logs);
     }
     
     @GetMapping("/logs/user/{performedBy}")
     @PreAuthorize("hasRole('GLOBAL_ADMIN')")
     public ResponseEntity<List<AuditLog>> getAuditLogsByUser(@PathVariable String performedBy) {
-        List<AuditLog> logs = auditLogRepository.findByPerformedBy(performedBy);
+        List<AuditLog> logs = auditService.getAuditLogsByUser(performedBy);
         return ResponseEntity.ok(logs);
     }
     
     @GetMapping("/logs/operation/{operation}")
     @PreAuthorize("hasRole('GLOBAL_ADMIN')")
     public ResponseEntity<List<AuditLog>> getAuditLogsByOperation(@PathVariable AuditLog.Operation operation) {
-        List<AuditLog> logs = auditLogRepository.findByOperation(operation);
+        List<AuditLog> logs = auditService.getAuditLogsByOperation(operation);
         return ResponseEntity.ok(logs);
     }
     
@@ -60,8 +60,9 @@ public class AuditController {
     public ResponseEntity<Page<AuditLog>> getAuditLogsByDateRange(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
-            Pageable pageable) {
-        Page<AuditLog> logs = auditLogRepository.findByTimestampBetween(start, end, pageable);
+            Pageable pageable
+    ) {
+        Page<AuditLog> logs = auditService.getAuditLogsByDateRange(start, end, pageable);
         return ResponseEntity.ok(logs);
     }
     
@@ -71,8 +72,9 @@ public class AuditController {
             @PathVariable String tenantId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
-            Pageable pageable) {
-        Page<AuditLog> logs = auditLogRepository.findByTenantIdAndTimestampBetween(tenantId, start, end, pageable);
+            Pageable pageable
+    ) {
+        Page<AuditLog> logs = auditService.getAuditLogsByTenantAndDateRange(tenantId, start, end, pageable);
         return ResponseEntity.ok(logs);
     }
     
@@ -81,7 +83,7 @@ public class AuditController {
     public ResponseEntity<List<AuditLog>> getAuditLogsByEntityTypeAndTenant(
             @PathVariable String entityType,
             @PathVariable String tenantId) {
-        List<AuditLog> logs = auditLogRepository.findByEntityTypeAndTenantId(entityType, tenantId);
+        List<AuditLog> logs = auditService.getAuditLogsByEntityTypeAndTenant(entityType, tenantId);
         return ResponseEntity.ok(logs);
     }
 }

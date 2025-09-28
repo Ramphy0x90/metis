@@ -4,12 +4,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -104,6 +108,39 @@ public class AuditService {
         
         auditLogRepository.save(auditLog);
         log.debug("Audit log created for bulk delete operation: {}", description);
+    }
+    
+    // Query methods for retrieving audit logs
+    public Page<AuditLog> getAllAuditLogs(Pageable pageable) {
+        return auditLogRepository.findAll(pageable);
+    }
+    
+    public List<AuditLog> getAuditLogsByEntity(String entityType, UUID entityId) {
+        return auditLogRepository.findByEntityTypeAndEntityId(entityType, entityId);
+    }
+    
+    public List<AuditLog> getAuditLogsByTenant(String tenantId) {
+        return auditLogRepository.findByTenantId(tenantId);
+    }
+    
+    public List<AuditLog> getAuditLogsByUser(String performedBy) {
+        return auditLogRepository.findByPerformedBy(performedBy);
+    }
+    
+    public List<AuditLog> getAuditLogsByOperation(AuditLog.Operation operation) {
+        return auditLogRepository.findByOperation(operation);
+    }
+    
+    public Page<AuditLog> getAuditLogsByDateRange(LocalDateTime start, LocalDateTime end, Pageable pageable) {
+        return auditLogRepository.findByTimestampBetween(start, end, pageable);
+    }
+    
+    public Page<AuditLog> getAuditLogsByTenantAndDateRange(String tenantId, LocalDateTime start, LocalDateTime end, Pageable pageable) {
+        return auditLogRepository.findByTenantIdAndTimestampBetween(tenantId, start, end, pageable);
+    }
+    
+    public List<AuditLog> getAuditLogsByEntityTypeAndTenant(String entityType, String tenantId) {
+        return auditLogRepository.findByEntityTypeAndTenantId(entityType, tenantId);
     }
     
     private String getCurrentUser() {
