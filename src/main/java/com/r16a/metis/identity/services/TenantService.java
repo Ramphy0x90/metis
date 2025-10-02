@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +39,29 @@ public class TenantService {
     private final AuditService auditService;
     
     public Page<TenantResponse> getAllTenants(Pageable pageable) {
-        Page<Tenant> tenantsPage = tenantRepository.findAll(pageable);
+        return searchTenants(null, pageable);
+    }
+    
+    public Page<TenantResponse> searchTenants(@Nullable  String q, Pageable pageable) {
+        Specification<Tenant> spec = Specification.unrestricted();
+
+        if (q != null && !q.isBlank()) {
+            String trimmed = q.trim();
+            UUID idCandidate = null;
+            try {
+                idCandidate = UUID.fromString(trimmed);
+            } catch (IllegalArgumentException ignored) {}
+
+            final UUID finalIdCandidate = idCandidate;
+            String like = "%" + trimmed.toLowerCase() + "%";
+            Specification<Tenant> idSpec = (root, query, cb) -> finalIdCandidate != null ? cb.equal(root.get("id"), finalIdCandidate) : null;
+            Specification<Tenant> nameSpec = (root, query, cb) -> cb.like(cb.lower(root.get("name")), like);
+            Specification<Tenant> domainSpec = (root, query, cb) -> cb.like(cb.lower(root.get("domain")), like);
+
+            spec = spec.and(idSpec.or(nameSpec).or(domainSpec));
+        }
+
+        Page<Tenant> tenantsPage = tenantRepository.findAll(spec, pageable);
 
         List<UUID> tenantIds = tenantsPage.getContent().stream()
                 .map(Tenant::getId)
