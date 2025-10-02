@@ -15,6 +15,8 @@ import com.r16a.metis.identity.repositories.TenantRepository;
 import com.r16a.metis.identity.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -43,10 +45,9 @@ public class UserService {
      *
      * @return list of all users
      */
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAll().stream()
-                .map(this::convertToUserResponse)
-                .collect(java.util.stream.Collectors.toList());
+    public Page<UserResponse> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(this::convertToUserResponse);
     }
 
     /**

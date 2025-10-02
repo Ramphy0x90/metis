@@ -42,4 +42,16 @@ public interface UserRepository extends JpaRepository<User, UUID> {
         GROUP BY t.id
         """)
     List<Object[]> getTenantCounts();
+
+    @Query("""
+        SELECT t.id,
+               COUNT(CASE WHEN r.name = 'EMPLOYEE' THEN 1 END) as employeeCount,
+               COUNT(CASE WHEN r.name = 'USER' THEN 1 END) as customerCount
+        FROM Tenant t
+        LEFT JOIN t.users u
+        LEFT JOIN u.roles r
+        WHERE t.id IN :tenantIds
+        GROUP BY t.id
+        """)
+    List<Object[]> getTenantCountsByTenantIds(@Param("tenantIds") List<UUID> tenantIds);
 }

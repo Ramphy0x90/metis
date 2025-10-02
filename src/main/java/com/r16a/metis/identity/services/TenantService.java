@@ -12,6 +12,9 @@ import com.r16a.metis.identity.repositories.TenantRepository;
 import com.r16a.metis.identity.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,20 +36,26 @@ public class TenantService {
     private final BookingRepository bookingRepository;
     private final AuditService auditService;
     
-    public List<TenantResponse> getAllTenants() {
-        List<Tenant> tenants = tenantRepository.findAll();
-        List<Object[]> tenantCounts = userRepository.getTenantCounts();
-        
-        // Create a map for quick lookup of counts by tenant ID
-        Map<UUID, TenantCounts> countsMap = tenantCounts.stream()
-                .collect(Collectors.toMap(
-                    row -> (UUID) row[0],
-                    row -> new TenantCounts((Long) row[1], (Long) row[2])
-                ));
-        
-        return tenants.stream()
+    public Page<TenantResponse> getAllTenants(Pageable pageable) {
+        Page<Tenant> tenantsPage = tenantRepository.findAll(pageable);
+
+        List<UUID> tenantIds = tenantsPage.getContent().stream()
+                .map(Tenant::getId)
+                .toList();
+
+        Map<UUID, TenantCounts> countsMap = tenantIds.isEmpty()
+                ? Map.of()
+                : userRepository.getTenantCountsByTenantIds(tenantIds).stream()
+                    .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> new TenantCounts((Long) row[1], (Long) row[2])
+                    ));
+
+        List<TenantResponse> content = tenantsPage.getContent().stream()
                 .map(tenant -> mapToResponseWithCounts(tenant, countsMap.get(tenant.getId())))
-                .collect(Collectors.toList());
+                .toList();
+
+        return new PageImpl<>(content, pageable, tenantsPage.getTotalElements());
     }
     
     public TenantResponse getTenantById(UUID id) {

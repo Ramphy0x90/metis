@@ -2,6 +2,8 @@ package com.r16a.metis.identity.controllers;
 
 import com.r16a.metis.identity.dto.*;
 import com.r16a.metis.identity.services.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,16 +22,9 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('GLOBAL_ADMIN')")
-    public ResponseEntity<AllUserResponse> getAllUsers() {
-        // TODO: think about pagination and generic response for "all *"
-        List<UserResponse> users = userService.getAllUsers();
-
-        AllUserResponse response = AllUserResponse.builder()
-                .users(users)
-                .totalCount(users.size())
-                .build();
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Page<UserResponse>> getAllUsers(Pageable pageable) {
+        Page<UserResponse> users = userService.getAllUsers(pageable);
+        return ResponseEntity.ok(users);
     }
 
     @GetMapping("/tenant/{tenantId}")

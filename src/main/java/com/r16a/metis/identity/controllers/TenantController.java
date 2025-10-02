@@ -7,6 +7,8 @@ import com.r16a.metis.identity.dto.TenantUpdateRequest;
 import com.r16a.metis.identity.services.TenantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,16 +23,9 @@ public class TenantController {
     private final TenantService tenantService;
     
     @GetMapping
-    public ResponseEntity<AllTenantResponse> getAllTenants() {
-        // TODO: think about pagination and generic response for "all *"
-        List<TenantResponse> tenants = tenantService.getAllTenants();
-
-        AllTenantResponse response = AllTenantResponse.builder()
-                .tenants(tenants)
-                .totalCount(tenants.size())
-                .build();
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Page<TenantResponse>> getAllTenants(Pageable pageable) {
+        Page<TenantResponse> tenants = tenantService.getAllTenants(pageable);
+        return ResponseEntity.ok(tenants);
     }
     
     @GetMapping("/{id}")
