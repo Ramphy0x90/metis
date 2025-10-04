@@ -6,6 +6,7 @@ import com.r16a.metis._core.exceptions.UnauthorizedOperationException;
 import com.r16a.metis._core.exceptions.TenantNotFoundException;
 import com.r16a.metis._core.exceptions.UserNotFoundException;
 import com.r16a.metis.identity.dto.UserResponse;
+import com.r16a.metis.identity.dto.UserUpdateRequest;
 import com.r16a.metis.identity.models.Role;
 import com.r16a.metis.identity.models.Tenant;
 import com.r16a.metis.identity.models.User;
@@ -22,6 +23,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.lang.Nullable;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -47,6 +51,32 @@ public class UserService {
      */
     public Page<UserResponse> getAllUsers(Pageable pageable) {
         return userRepository.findAll(pageable)
+                .map(this::convertToUserResponse);
+    }
+
+    public Page<UserResponse> searchUsers(@Nullable String q, Pageable pageable) {
+        Specification<User> spec = Specification.unrestricted();
+
+        if (q != null && !q.isBlank()) {
+            String trimmed = q.trim();
+            UUID idCandidate = null;
+
+            try {
+                idCandidate = UUID.fromString(trimmed);
+            } catch (IllegalArgumentException ignored) {}
+
+            final UUID finalIdCandidate = idCandidate;
+            String like = "%" + trimmed.toLowerCase() + "%";
+            Specification<User> idSpec = (root, query, cb) -> finalIdCandidate != null ? cb.equal(root.get("id"), finalIdCandidate) : null;
+            Specification<User> emailSpec = (root, query, cb) -> cb.like(cb.lower(root.get("email")), like);
+            Specification<User> nameSpec = (root, query, cb) -> cb.like(cb.lower(root.get("name")), like);
+            Specification<User> surnameSpec = (root, query, cb) -> cb.like(cb.lower(root.get("surname")), like);
+            Specification<User> tenantSpec = (root, query, cb) -> cb.like(cb.lower(root.join("tenant").get("name")), like);
+
+            spec = spec.and(idSpec.or(emailSpec).or(nameSpec).or(surnameSpec).or(tenantSpec));
+        }
+
+        return userRepository.findAll(spec, pageable)
                 .map(this::convertToUserResponse);
     }
 
@@ -207,6 +237,69 @@ public class UserService {
                 .createdAt(savedUser.getCreatedAt())
                 .updatedAt(savedUser.getUpdatedAt())
                 .build();
+    }
+
+    @Transactional
+    public UserResponse updateUser(UUID id, UserUpdateRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+
+        // Keep old snapshot for audit
+        User oldUser = new User();
+        oldUser.setId(user.getId());
+        oldUser.setEmail(user.getEmail());
+        oldUser.setName(user.getName());
+        oldUser.setSurname(user.getSurname());
+        oldUser.setTenant(user.getTenant());
+        oldUser.setRoles(user.getRoles());
+        oldUser.setCreatedAt(user.getCreatedAt());
+        oldUser.setUpdatedAt(user.getUpdatedAt());
+
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            user.setEmail(request.getEmail());
+        }
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        if (request.getName() != null) {
+            user.setName(request.getName());
+        }
+        if (request.getSurname() != null) {
+            user.setSurname(request.getSurname());
+        }
+        if (request.getTenantId() != null) {
+            Tenant tenant = tenantRepository.findById(request.getTenantId())
+                    .orElseThrow(() -> new TenantNotFoundException(request.getTenantId()));
+            user.setTenant(tenant);
+        }
+        if (request.getRoles() != null && !request.getRoles().isEmpty()) {
+            Set<Role> userRoles = new HashSet<>();
+            for (UserRole roleName : request.getRoles()) {
+                Optional<Role> role = roleRepository.findByName(roleName);
+                role.ifPresent(userRoles::add);
+            }
+            user.setRoles(userRoles);
+        }
+
+        User updated = userRepository.save(user);
+
+        String tenantUIDStr = updated.getTenant() != null ? updated.getTenant().getId().toString() : null;
+        auditService.logUpdate("User", updated.getId(), oldUser, updated, tenantUIDStr);
+
+        return convertToUserResponse(updated);
+    }
+
+    @Transactional
+    public void deleteUser(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(id));
+
+        String tenantUIDStr = user.getTenant() != null ? user.getTenant().getId().toString() : null;
+
+        userRepository.deleteById(id);
+
+        auditService.logDelete("User", id, user, tenantUIDStr);
+        log.info("Deleted user with ID: {}", id);
     }
 
     /**

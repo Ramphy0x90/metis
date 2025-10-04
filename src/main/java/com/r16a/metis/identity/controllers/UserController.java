@@ -27,8 +27,18 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('GLOBAL_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<Page<UserResponse>> searchUsers(
+            @RequestParam(name = "q", required = false) String query,
+            Pageable pageable
+    ) {
+        Page<UserResponse> users = userService.searchUsers(query, pageable);
+        return ResponseEntity.ok(users);
+    }
+
     @GetMapping("/tenant/{tenantId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('GLOBAL_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<List<UserResponse>> getUsersByTenant(@PathVariable UUID tenantId) {
         List<UserResponse> users = userService.getUsersByTenant(tenantId);
         return ResponseEntity.ok(users);
@@ -61,5 +71,22 @@ public class UserController {
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('GLOBAL_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> updateUser(
+            @PathVariable UUID id,
+            @Valid @RequestBody UserUpdateRequest request
+    ) {
+        UserResponse updated = userService.updateUser(id, request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('GLOBAL_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
+        userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }
