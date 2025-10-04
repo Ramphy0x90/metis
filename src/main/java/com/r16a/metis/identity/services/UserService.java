@@ -208,6 +208,7 @@ public class UserService {
         Set<Role> userRoles = new HashSet<>();
         for (UserRole roleName : roles) {
             Optional<Role> role = roleRepository.findByName(roleName);
+
             if (role.isPresent()) {
                 userRoles.add(role.get());
             } else {

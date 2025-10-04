@@ -2,17 +2,21 @@ package com.r16a.metis.identity.controllers;
 
 import com.r16a.metis.identity.dto.*;
 import com.r16a.metis.identity.services.UserService;
+import com.r16a.metis.identity.models.UserRole;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/users")
@@ -88,5 +92,24 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/roles")
+    @PreAuthorize("hasRole('GLOBAL_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<List<UserRole>> getAvailableRoles() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        boolean isGlobalAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_GLOBAL_ADMIN"));
+
+        List<UserRole> roles;
+        if (isGlobalAdmin) {
+            roles = Arrays.asList(UserRole.values());
+        } else {
+            roles = new ArrayList<>(Arrays.asList(UserRole.values()));
+            roles.remove(UserRole.GLOBAL_ADMIN);
+        }
+
+        return ResponseEntity.ok(roles);
     }
 }
