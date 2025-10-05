@@ -257,20 +257,25 @@ public class UserService {
         if (request.getEmail() != null && !request.getEmail().isBlank()) {
             user.setEmail(request.getEmail());
         }
+
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
+
         if (request.getName() != null) {
             user.setName(request.getName());
         }
+
         if (request.getSurname() != null) {
             user.setSurname(request.getSurname());
         }
+
         if (request.getTenantId() != null) {
             Tenant tenant = tenantRepository.findById(request.getTenantId())
                     .orElseThrow(() -> new TenantNotFoundException(request.getTenantId()));
             user.setTenant(tenant);
         }
+
         if (request.getRoles() != null && !request.getRoles().isEmpty()) {
             Set<Role> userRoles = new HashSet<>();
             for (UserRole roleName : request.getRoles()) {

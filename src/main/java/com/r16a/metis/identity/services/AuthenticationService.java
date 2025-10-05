@@ -1,10 +1,12 @@
 package com.r16a.metis.identity.services;
 
 import com.r16a.metis._core.exceptions.InvalidTokenException;
+import com.r16a.metis._core.exceptions.UnauthorizedOperationException;
 import com.r16a.metis.identity.config.jwt.JwtService;
 import com.r16a.metis.identity.config.security.CustomUserDetailsService;
 import com.r16a.metis.identity.dto.AuthenticationResponse;
 import com.r16a.metis.identity.models.Role;
+import com.r16a.metis.identity.models.Tenant;
 import com.r16a.metis.identity.models.User;
 import com.r16a.metis.identity.models.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -39,15 +41,18 @@ public class AuthenticationService {
      * @return an object with user restricted details and tokens
      * @throws org.springframework.security.core.AuthenticationException if authentication fails
      */
-    public AuthenticationResponse authenticate(String email, String password) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
-        );
+    public AuthenticationResponse authenticate(String email, String password, String tenantDomain) {
+        User user = userService.findByEmailOrThrow(email);
+        Tenant userTenant = user.getTenant();
 
+        if(userTenant != null && !userTenant.getDomain().equals(tenantDomain)) {
+            throw new UnauthorizedOperationException("User is on wrong tenant");
+        }
+
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Map<String, String> tokens = buildTokens(userDetails);
 
-        User user = userService.findByEmailOrThrow(email);
         List<String> userRoles = user.getRoles()
                 .stream()
                 .map(Role::getName)
