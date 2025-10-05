@@ -73,6 +73,17 @@ public class TenantService {
         return mapToResponse(tenant);
     }
 
+    public TenantResponse getTenantByDomain(String domain) {
+        if (domain == null || domain.isBlank()) {
+            throw new IllegalArgumentException("Domain must be provided");
+        }
+
+        String normalized = domain.trim();
+        Tenant tenant = tenantRepository.findByDomainIgnoreCase(normalized)
+                .orElseThrow(() -> new TenantNotFoundException(normalized));
+        return mapToResponse(tenant);
+    }
+
     public TenantResponse createTenant(TenantCreateRequest request) {
         Tenant tenant = new Tenant();
         tenant.setName(request.getName());

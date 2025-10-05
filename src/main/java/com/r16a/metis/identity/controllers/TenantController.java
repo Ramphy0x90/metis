@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -38,6 +39,13 @@ public class TenantController {
     @GetMapping("/{id}")
     public ResponseEntity<TenantResponse> getTenantById(@PathVariable UUID id) {
         TenantResponse tenant = tenantService.getTenantById(id);
+        return ResponseEntity.ok(tenant);
+    }
+
+    @GetMapping("/by-domain/{domain:.+}")
+    @PreAuthorize("hasAnyRole('GLOBAL_ADMIN','ADMIN','EMPLOYEE','USER')")
+    public ResponseEntity<TenantResponse> getTenantByDomain(@PathVariable String domain) {
+        TenantResponse tenant = tenantService.getTenantByDomain(domain);
         return ResponseEntity.ok(tenant);
     }
 

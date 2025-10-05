@@ -49,8 +49,9 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health/**").permitAll()
                 
                 // Admin endpoints - require Global Admin role
+                .requestMatchers("/api/tenants/by-domain/**").authenticated()
                 .requestMatchers("/api/tenants/**").hasRole("GLOBAL_ADMIN")
-                
+
                 // Audit endpoints - require appropriate roles
                 .requestMatchers("/api/audit/**").authenticated()
                 
@@ -70,8 +71,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder);
         return authProvider;
     }

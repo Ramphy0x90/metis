@@ -6,4 +6,8 @@ public class TenantNotFoundException extends RuntimeException {
     public TenantNotFoundException(UUID id) {
         super("Tenant not found with id: " + id);
     }
+
+    public TenantNotFoundException(String domain) {
+        super("Tenant not found with domain: " + domain);
+    }
 }

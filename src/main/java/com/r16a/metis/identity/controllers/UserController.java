@@ -43,8 +43,11 @@ public class UserController {
 
     @GetMapping("/tenant/{tenantId}")
     @PreAuthorize("hasRole('GLOBAL_ADMIN') or hasRole('ADMIN')")
-    public ResponseEntity<List<UserResponse>> getUsersByTenant(@PathVariable UUID tenantId) {
-        List<UserResponse> users = userService.getUsersByTenant(tenantId);
+    public ResponseEntity<Page<UserResponse>> getUsersByTenant(
+            @PathVariable UUID tenantId,
+            Pageable pageable
+    ) {
+        Page<UserResponse> users = userService.getUsersByTenant(tenantId, pageable);
         return ResponseEntity.ok(users);
     }
 

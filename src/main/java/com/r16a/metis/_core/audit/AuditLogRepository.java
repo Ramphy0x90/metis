@@ -13,11 +13,10 @@ import java.util.UUID;
 
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
+    Page<AuditLog> findByTenantId(String tenantId, Pageable pageable);
     
-    List<AuditLog> findByEntityTypeAndEntityId(String entityType, UUID entityId);
-    
-    List<AuditLog> findByTenantId(String tenantId);
-    
+    List<AuditLog> findByEntityTypeAndEntityId(String entityType, UUID entityId, Pageable pageable);
+
     List<AuditLog> findByPerformedBy(String performedBy);
     
     List<AuditLog> findByOperation(AuditLog.Operation operation);

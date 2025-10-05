@@ -109,18 +109,17 @@ public class AuditService {
         auditLogRepository.save(auditLog);
         log.debug("Audit log created for bulk delete operation: {}", description);
     }
-    
-    // Query methods for retrieving audit logs
+
     public Page<AuditLog> getAllAuditLogs(Pageable pageable) {
         return auditLogRepository.findAll(pageable);
     }
-    
-    public List<AuditLog> getAuditLogsByEntity(String entityType, UUID entityId) {
-        return auditLogRepository.findByEntityTypeAndEntityId(entityType, entityId);
+
+    public Page<AuditLog> getAuditLogsByTenant(String tenantId, Pageable pageable) {
+        return auditLogRepository.findByTenantId(tenantId, pageable);
     }
     
-    public List<AuditLog> getAuditLogsByTenant(String tenantId) {
-        return auditLogRepository.findByTenantId(tenantId);
+    public List<AuditLog> getAuditLogsByEntity(String entityType, UUID entityId, Pageable pageable) {
+        return auditLogRepository.findByEntityTypeAndEntityId(entityType, entityId, pageable);
     }
     
     public List<AuditLog> getAuditLogsByUser(String performedBy) {

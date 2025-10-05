@@ -24,20 +24,25 @@ public class AuditController {
         Page<AuditLog> logs = auditService.getAllAuditLogs(pageable);
         return ResponseEntity.ok(logs);
     }
+
+    @GetMapping("/logs/tenant/{tenantId}")
+    @PreAuthorize("hasRole('GLOBAL_ADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<Page<AuditLog>> getAuditLogsByTenant(
+            @PathVariable String tenantId,
+            Pageable pageable
+    ) {
+        Page<AuditLog> logs = auditService.getAuditLogsByTenant(tenantId, pageable);
+        return ResponseEntity.ok(logs);
+    }
     
     @GetMapping("/logs/entity/{entityType}/{entityId}")
     @PreAuthorize("hasRole('GLOBAL_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<List<AuditLog>> getAuditLogsByEntity(
             @PathVariable String entityType,
-            @PathVariable UUID entityId) {
-        List<AuditLog> logs = auditService.getAuditLogsByEntity(entityType, entityId);
-        return ResponseEntity.ok(logs);
-    }
-    
-    @GetMapping("/logs/tenant/{tenantId}")
-    @PreAuthorize("hasRole('GLOBAL_ADMIN') or hasRole('ADMIN')")
-    public ResponseEntity<List<AuditLog>> getAuditLogsByTenant(@PathVariable String tenantId) {
-        List<AuditLog> logs = auditService.getAuditLogsByTenant(tenantId);
+            @PathVariable UUID entityId,
+            Pageable pageable
+    ) {
+        List<AuditLog> logs = auditService.getAuditLogsByEntity(entityType, entityId, pageable);
         return ResponseEntity.ok(logs);
     }
     
@@ -82,7 +87,8 @@ public class AuditController {
     @PreAuthorize("hasRole('GLOBAL_ADMIN') or hasRole('ADMIN')")
     public ResponseEntity<List<AuditLog>> getAuditLogsByEntityTypeAndTenant(
             @PathVariable String entityType,
-            @PathVariable String tenantId) {
+            @PathVariable String tenantId
+    ) {
         List<AuditLog> logs = auditService.getAuditLogsByEntityTypeAndTenant(entityType, tenantId);
         return ResponseEntity.ok(logs);
     }

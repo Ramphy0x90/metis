@@ -1,9 +1,9 @@
 package com.r16a.metis.identity.services;
 
 import com.r16a.metis._core.audit.AuditService;
-import com.r16a.metis._core.exceptions.UserAlreadyExistsException;
-import com.r16a.metis._core.exceptions.UnauthorizedOperationException;
 import com.r16a.metis._core.exceptions.TenantNotFoundException;
+import com.r16a.metis._core.exceptions.UnauthorizedOperationException;
+import com.r16a.metis._core.exceptions.UserAlreadyExistsException;
 import com.r16a.metis._core.exceptions.UserNotFoundException;
 import com.r16a.metis.identity.dto.UserResponse;
 import com.r16a.metis.identity.dto.UserUpdateRequest;
@@ -18,17 +18,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.lang.Nullable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -88,15 +87,14 @@ public class UserService {
      * @return list of users belonging to the tenant
      * @throws TenantNotFoundException if the tenant is not found
      */
-    public List<UserResponse> getUsersByTenant(UUID tenantId) {
+    public Page<UserResponse> getUsersByTenant(UUID tenantId, Pageable pageable) {
         // Verify tenant exists
         if (!tenantRepository.existsById(tenantId)) {
             throw new TenantNotFoundException(tenantId);
         }
 
-        return userRepository.findByTenantId(tenantId).stream()
-                .map(this::convertToUserResponse)
-                .collect(java.util.stream.Collectors.toList());
+        return userRepository.findByTenantId(tenantId, pageable)
+                .map(this::convertToUserResponse);
     }
 
     /**
