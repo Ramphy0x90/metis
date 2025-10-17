@@ -9,8 +9,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-metis_dev}
       POSTGRES_USER: ${POSTGRES_USER:-metis}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-metis123}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -26,8 +24,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: metis-redis-${ENVIRONMENT:-dev}
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -63,15 +59,11 @@ services:
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin@admin.com}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-password}
       - DEBUG_ENABLED=${DEBUG_ENABLED:-false}
-    ports:
-      - "${SERVER_PORT:-8080}:8080"
-      - "${DEBUG_PORT:-5005}:5005"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    restart: ${RESTART_POLICY:-no}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
       interval: 30s
@@ -80,6 +72,13 @@ services:
       start_period: 60s
     networks:
       - metis-network
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.metis.rule=Host(`metiss.ch`)"
+      - "traefik.http.routers.metis.entrypoints=websecure"
+      - "traefik.http.routers.metis.tls.certresolver=letsencrypt"
+      - "traefik.http.services.metis.loadbalancer.server.port=8080"
 
 volumes:
   postgres_data:
@@ -88,3 +87,6 @@ volumes:
 networks:
   metis-network:
     driver: bridge
+
+  traefik-network:
+    external: true
