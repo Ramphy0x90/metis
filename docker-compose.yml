@@ -71,8 +71,12 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      - metis-network
-      - traefik-network
+      metis-network:
+        aliases:
+          - metis-app-dev
+      traefik-network:
+        aliases:
+          - metis-app-dev
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.metis.rule=Host(`metiss.ch`) && PathPrefix(`/api`)"
