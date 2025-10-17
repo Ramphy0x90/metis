@@ -75,7 +75,7 @@ services:
       - traefik-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.metis.rule=Host(`metiss.ch`)"
+      - "traefik.http.routers.metis.rule=Host(`metiss.ch`) && PathPrefix(`/api`)"
       - "traefik.http.routers.metis.entrypoints=websecure"
       - "traefik.http.routers.metis.tls.certresolver=letsencrypt"
       - "traefik.http.services.metis.loadbalancer.server.port=8080"
