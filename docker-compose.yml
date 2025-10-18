@@ -83,7 +83,6 @@ services:
       - "traefik.http.routers.metis.entrypoints=websecure"
       - "traefik.http.routers.metis.tls=true"
       - "traefik.http.routers.metis.tls.certresolver=letsencrypt"
-      - "traefik.http.services.metis.loadbalancer.server.scheme=http"
       - "traefik.http.services.metis.loadbalancer.server.port=8080"
 
 volumes:
