@@ -73,8 +73,12 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      - metis-network
-      - traefik-network
+      metis-network:
+        aliases:
+          - metis-backend
+      traefik-network:
+        aliases:
+          - metis-backend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.metis-backend.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.metiss.ch`, `metiss.ch`) && PathPrefix(`/api`)"
