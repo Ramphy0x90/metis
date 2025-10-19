@@ -40,7 +40,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: metis-app-${ENVIRONMENT:-dev}
+    container_name: metis-backend-${ENVIRONMENT:-dev}
     ports:
       - "8080:8080"
     environment:
