@@ -73,20 +73,16 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      metis-network:
-        aliases:
-          - metis-app-dev
-      traefik-network:
-        aliases:
-          - metis-app-dev
+      - metis-network
+      - traefik-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.metis.rule=Host(`metiss.ch`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.metis.entrypoints=websecure"
-      - "traefik.http.routers.metis.tls=true"
-      - "traefik.http.routers.metis.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.metis.service=metis"
-      - "traefik.http.services.metis.loadbalancer.server.port=8080"
+      - "traefik.http.routers.metis-backend.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.metiss.ch`, `metiss.ch`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.metis-backend.entrypoints=websecure"
+      - "traefik.http.routers.metis-backend.tls=true"
+      - "traefik.http.routers.metis-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.metis-backend.service=metis-backend"
+      - "traefik.http.services.metis-backend.loadbalancer.server.port=8080"
 
 volumes:
   postgres_data:
