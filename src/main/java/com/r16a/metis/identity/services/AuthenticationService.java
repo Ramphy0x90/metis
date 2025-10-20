@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
+    private final TenantService tenantService;
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService customUserDetailsService;
@@ -47,6 +48,10 @@ public class AuthenticationService {
 
         if(userTenant != null && !userTenant.getDomain().equals(tenantDomain)) {
             throw new UnauthorizedOperationException("User is on wrong tenant");
+        }
+
+        if(tenantDomain != null && tenantService.getTenantByDomain(tenantDomain) == null) {
+            throw new UnauthorizedOperationException("Trying to access to non existent tenant");
         }
 
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
