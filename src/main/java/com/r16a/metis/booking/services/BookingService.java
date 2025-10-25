@@ -3,6 +3,7 @@ package com.r16a.metis.booking.services;
 import com.r16a.metis._core.audit.AuditService;
 import com.r16a.metis._core.exceptions.TenantNotFoundException;
 import com.r16a.metis._core.exceptions.UserNotFoundException;
+import com.r16a.metis.booking.dto.BookingUpdateRequest;
 import com.r16a.metis.booking.models.Booking;
 import com.r16a.metis.booking.models.TenantService;
 import com.r16a.metis.booking.repositories.BookingRepository;
@@ -12,6 +13,8 @@ import com.r16a.metis.identity.repositories.TenantRepository;
 import com.r16a.metis.identity.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +33,15 @@ public class BookingService {
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
     private final AuditService auditService;
+    
+    public Page<Booking> getAllBookings(Pageable pageable) {
+        return bookingRepository.findAll(pageable);
+    }
+    
+    public Booking getBookingById(UUID bookingId) {
+        return bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+    }
     
     public Booking createBooking(UUID tenantId, UUID serviceId, UUID employeeId, 
                                 String clientName, String clientEmail, 
@@ -97,6 +109,64 @@ public class BookingService {
         return updatedBooking;
     }
     
+    public Booking updateBooking(UUID bookingId, BookingUpdateRequest request) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        
+        // Store old values for audit
+        Booking oldBooking = new Booking();
+        oldBooking.setId(booking.getId());
+        oldBooking.setStatus(booking.getStatus());
+        oldBooking.setClientName(booking.getClientName());
+        oldBooking.setClientEmail(booking.getClientEmail());
+        oldBooking.setStartTime(booking.getStartTime());
+        oldBooking.setEndTime(booking.getEndTime());
+        oldBooking.setEmployee(booking.getEmployee());
+        oldBooking.setService(booking.getService());
+        
+        // Update fields if provided
+        if (request.getServiceId() != null) {
+            TenantService service = tenantServiceRepository.findById(request.getServiceId())
+                    .orElseThrow(() -> new RuntimeException("Service not found"));
+            booking.setService(service);
+        }
+        
+        if (request.getEmployeeId() != null) {
+            User employee = userRepository.findById(request.getEmployeeId())
+                    .orElseThrow(() -> new RuntimeException("Employee not found"));
+            booking.setEmployee(employee);
+        }
+        
+        if (request.getClientName() != null) {
+            booking.setClientName(request.getClientName());
+        }
+        
+        if (request.getClientEmail() != null) {
+            booking.setClientEmail(request.getClientEmail());
+        }
+        
+        if (request.getStartTime() != null) {
+            booking.setStartTime(request.getStartTime());
+        }
+        
+        if (request.getEndTime() != null) {
+            booking.setEndTime(request.getEndTime());
+        }
+        
+        if (request.getStatus() != null) {
+            booking.setStatus(request.getStatus());
+        }
+        
+        Booking updatedBooking = bookingRepository.save(booking);
+        
+        // Audit log the update
+        String tenantId = updatedBooking.getTenant() != null ? updatedBooking.getTenant().getId().toString() : null;
+        auditService.logUpdate("Booking", updatedBooking.getId(), oldBooking, updatedBooking, tenantId);
+        
+        log.info("Updated booking with ID: {}", updatedBooking.getId());
+        return updatedBooking;
+    }
+    
     public void deleteBooking(UUID bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
@@ -111,11 +181,11 @@ public class BookingService {
         log.info("Deleted booking with ID: {}", bookingId);
     }
     
-    public List<Booking> getBookingsByTenant(UUID tenantId) {
-        return bookingRepository.findByTenantId(tenantId);
+    public Page<Booking> getBookingsByTenant(UUID tenantId, Pageable pageable) {
+        return bookingRepository.findByTenantId(tenantId, pageable);
     }
     
-    public List<Booking> getBookingsByEmployee(UUID employeeId) {
-        return bookingRepository.findByEmployeeId(employeeId);
+    public Page<Booking> getBookingsByEmployee(UUID employeeId, Pageable pageable) {
+        return bookingRepository.findByEmployeeId(employeeId, pageable);
     }
 }

@@ -5,6 +5,7 @@ import com.r16a.metis.identity.config.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -57,7 +58,10 @@ public class SecurityConfig {
                 
                 // User management endpoints - handled by method-level security
                 .requestMatchers("/api/users/**").authenticated()
-                
+
+                .requestMatchers(HttpMethod.GET, "/api/api/services").permitAll()
+                .requestMatchers("/api/api/services/**").authenticated()
+
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session

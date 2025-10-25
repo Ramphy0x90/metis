@@ -7,6 +7,8 @@ import com.r16a.metis.booking.repositories.TenantServiceRepository;
 import com.r16a.metis.identity.repositories.TenantRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,15 @@ public class TenantServiceService {
     private final TenantServiceRepository tenantServiceRepository;
     private final TenantRepository tenantRepository;
     private final AuditService auditService;
+    
+    public Page<TenantService> getAllServices(Pageable pageable) {
+        return tenantServiceRepository.findAll(pageable);
+    }
+    
+    public TenantService getServiceById(UUID serviceId) {
+        return tenantServiceRepository.findById(serviceId)
+                .orElseThrow(() -> new RuntimeException("Service not found"));
+    }
     
     public TenantService createService(UUID tenantId, String name, int durationMinutes, BigDecimal price) {
         // Validate tenant exists
@@ -84,7 +95,7 @@ public class TenantServiceService {
         log.info("Deleted service with ID: {}", serviceId);
     }
     
-    public List<TenantService> getServicesByTenant(UUID tenantId) {
-        return tenantServiceRepository.findByTenantId(tenantId);
+    public Page<TenantService> getServicesByTenant(UUID tenantId, Pageable pageable) {
+        return tenantServiceRepository.findByTenantId(tenantId, pageable);
     }
 }

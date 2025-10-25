@@ -1,6 +1,8 @@
 package com.r16a.metis.booking.repositories;
 
 import com.r16a.metis.booking.models.Booking;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -13,9 +15,11 @@ import java.util.UUID;
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, UUID> {
     
+    Page<Booking> findByTenantId(UUID tenantId, Pageable pageable);
+
     List<Booking> findByTenantId(UUID tenantId);
-    
-    List<Booking> findByEmployeeId(UUID employeeId);
+
+    Page<Booking> findByEmployeeId(UUID employeeId, Pageable pageable);
     
     List<Booking> findByServiceId(UUID serviceId);
     

@@ -50,7 +50,7 @@ public class AuthenticationService {
             throw new UnauthorizedOperationException("User is on wrong tenant");
         }
 
-        if(tenantDomain != null && tenantService.getTenantByDomain(tenantDomain) == null) {
+        if(tenantDomain != null && !tenantDomain.isBlank() && tenantService.getTenantByDomain(tenantDomain) == null) {
             throw new UnauthorizedOperationException("Trying to access to non existent tenant");
         }
 
