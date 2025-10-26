@@ -40,7 +40,8 @@ public class TenantServiceController {
     ) {
         TenantService service = tenantServiceService.createService(
             tenantId,
-            request.getName(),
+            request.getTitle(),
+            request.getDescription(),
             request.getDurationMinutes(),
             request.getPrice()
         );
@@ -54,7 +55,8 @@ public class TenantServiceController {
     ) {
         TenantService service = tenantServiceService.updateService(
             id,
-            request.getName(),
+            request.getTitle(),
+            request.getDescription(),
             request.getDurationMinutes(),
             request.getPrice()
         );
@@ -82,7 +84,8 @@ public class TenantServiceController {
                 .id(service.getId())
                 .tenantId(service.getTenant() != null ? service.getTenant().getId() : null)
                 .tenantName(service.getTenant() != null ? service.getTenant().getName() : null)
-                .name(service.getName())
+                .title(service.getTitle())
+                .description(service.getDescription())
                 .durationMinutes(service.getDurationMinutes())
                 .price(service.getPrice())
                 .build();

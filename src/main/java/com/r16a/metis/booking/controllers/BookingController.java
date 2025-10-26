@@ -92,7 +92,7 @@ public class BookingController {
                 .serviceId(booking.getService() != null ? booking.getService().getId() : null)
                 .employeeName(booking.getEmployee() != null ? 
                     (booking.getEmployee().getName() + " " + booking.getEmployee().getSurname()) : null)
-                .serviceName(booking.getService() != null ? booking.getService().getName() : null)
+                .serviceName(booking.getService() != null ? booking.getService().getTitle() : null)
                 .clientName(booking.getClientName())
                 .clientEmail(booking.getClientEmail())
                 .startTime(booking.getStartTime())

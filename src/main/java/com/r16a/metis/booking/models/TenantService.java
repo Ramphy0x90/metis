@@ -15,7 +15,8 @@ public class TenantService {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String name;
+    private String title;
+    private String description;
     private int durationMinutes;
     private BigDecimal price;
 

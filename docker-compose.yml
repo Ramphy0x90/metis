@@ -5,6 +5,8 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: metis-postgres-${ENVIRONMENT:-dev}
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-metis_dev}
       POSTGRES_USER: ${POSTGRES_USER:-metis}

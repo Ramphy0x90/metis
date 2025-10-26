@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -35,14 +34,15 @@ public class TenantServiceService {
                 .orElseThrow(() -> new RuntimeException("Service not found"));
     }
     
-    public TenantService createService(UUID tenantId, String name, int durationMinutes, BigDecimal price) {
+    public TenantService createService(UUID tenantId, String title, String description, int durationMinutes, BigDecimal price) {
         // Validate tenant exists
         if (!tenantRepository.existsById(tenantId)) {
             throw new TenantNotFoundException(tenantId);
         }
         
         TenantService service = new TenantService();
-        service.setName(name);
+        service.setTitle(title);
+        service.setDescription(description);
         service.setDurationMinutes(durationMinutes);
         service.setPrice(price);
         service.setTenant(tenantRepository.findById(tenantId).orElseThrow());
@@ -52,22 +52,24 @@ public class TenantServiceService {
         // Audit log the creation
         auditService.logCreate("TenantService", savedService.getId(), savedService, tenantId.toString());
         
-        log.info("Created service: {} with ID: {} for tenant: {}", name, savedService.getId(), tenantId);
+        log.info("Created service: {} with ID: {} for tenant: {}", title, savedService.getId(), tenantId);
         return savedService;
     }
     
-    public TenantService updateService(UUID serviceId, String name, int durationMinutes, BigDecimal price) {
+    public TenantService updateService(UUID serviceId, String name, String description, int durationMinutes, BigDecimal price) {
         TenantService service = tenantServiceRepository.findById(serviceId)
                 .orElseThrow(() -> new RuntimeException("Service not found"));
         
         // Store old values for audit
         TenantService oldService = new TenantService();
         oldService.setId(service.getId());
-        oldService.setName(service.getName());
+        oldService.setTitle(service.getTitle());
+        oldService.setDescription(service.getDescription());
         oldService.setDurationMinutes(service.getDurationMinutes());
         oldService.setPrice(service.getPrice());
         
-        service.setName(name);
+        service.setTitle(name);
+        service.setDescription(description);
         service.setDurationMinutes(durationMinutes);
         service.setPrice(price);
         

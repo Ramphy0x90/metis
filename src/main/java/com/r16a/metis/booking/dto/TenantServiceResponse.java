@@ -16,7 +16,8 @@ public class TenantServiceResponse {
     private UUID id;
     private UUID tenantId;
     private String tenantName;
-    private String name;
+    private String title;
+    private String description;
     private Integer durationMinutes;
     private BigDecimal price;
 }
