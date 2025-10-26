@@ -35,11 +35,10 @@ public class TenantServiceController {
     
     @PostMapping
     public ResponseEntity<TenantServiceResponse> createService(
-            @RequestParam UUID tenantId,
             @Valid @RequestBody TenantServiceRequest request
     ) {
         TenantService service = tenantServiceService.createService(
-            tenantId,
+            request.getTenantId(),
             request.getTitle(),
             request.getDescription(),
             request.getDurationMinutes(),

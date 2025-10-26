@@ -10,12 +10,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class TenantServiceRequest {
+    private UUID tenantId;
+
     @NotBlank(message = "Service title is required")
     private String title;
 
