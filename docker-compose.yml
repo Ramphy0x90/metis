@@ -83,12 +83,13 @@ services:
           - metis-backend
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.metis-backend.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.metiss.ch`, `metiss.ch`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.metis-backend.entrypoints=websecure"
-      - "traefik.http.routers.metis-backend.tls=true"
-      - "traefik.http.routers.metis-backend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.metis-backend.service=metis-backend"
-      - "traefik.http.services.metis-backend.loadbalancer.server.port=8080"
+      - "traefik.http.routers.app.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.metiss.ch`, `metiss.ch`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.app.entrypoints=websecure"
+      - "traefik.http.routers.app.tls=true"
+      - "traefik.http.routers.app.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.app.service=app"
+      - "traefik.http.services.app.loadbalancer.server.port=8080"
+      - "traefik.http.services.app.loadbalancer.server.scheme=http"
 
 volumes:
   postgres_data:
