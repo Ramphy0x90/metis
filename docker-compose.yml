@@ -84,7 +84,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.app.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.metiss.ch`, `metiss.ch`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.app.priority=2"
+      - "traefik.http.routers.app.priority=100"
       - "traefik.http.routers.app.entrypoints=websecure"
       - "traefik.http.routers.app.tls=true"
       - "traefik.http.routers.app.tls.certresolver=letsencrypt"
